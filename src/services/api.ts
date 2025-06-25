@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Replace with your actual ngrok subdomain
-const BASE_URL = 'https://your-ngrok-subdomain.ngrok.io/api';
+const BASE_URL = 'https://e51f-197-255-102-7.ngrok-free.app/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
