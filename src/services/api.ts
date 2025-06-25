@@ -8,8 +8,21 @@ const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
+
+// Add response interceptor to handle potential data format issues
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.data);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Categories API
 export const categoriesApi = {

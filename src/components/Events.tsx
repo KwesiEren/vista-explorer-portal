@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Calendar, MapPin, Upload, X } from 'lucide-react';
 import { eventsApi } from '../services/api';
@@ -26,9 +25,16 @@ const Events = () => {
 
   const fetchEvents = async () => {
     try {
+      console.log('Fetching events...');
       const response = await eventsApi.getAll();
-      setEvents(response.data);
+      console.log('Events response:', response.data);
+      
+      // Ensure we have an array
+      const eventsData = Array.isArray(response.data) ? response.data : [];
+      setEvents(eventsData);
     } catch (error) {
+      console.error('Error fetching events:', error);
+      setEvents([]); // Set empty array on error
       toast({
         title: "Error",
         description: "Failed to fetch events",
@@ -92,6 +98,7 @@ const Events = () => {
       resetForm();
       fetchEvents();
     } catch (error) {
+      console.error('Error submitting event:', error);
       toast({
         title: "Error",
         description: `Failed to ${editingEvent ? 'update' : 'create'} event`,
@@ -111,6 +118,7 @@ const Events = () => {
         description: "Event deleted successfully",
       });
     } catch (error) {
+      console.error('Error deleting event:', error);
       toast({
         title: "Error",
         description: "Failed to delete event",
@@ -138,7 +146,12 @@ const Events = () => {
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
 
   if (loading) {
@@ -293,6 +306,10 @@ const Events = () => {
                   src={event.image_url}
                   alt={event.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', event.image_url);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             )}

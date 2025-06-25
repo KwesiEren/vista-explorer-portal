@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, MapPin, Upload, X } from 'lucide-react';
 import { poisApi, categoriesApi } from '../services/api';
@@ -28,9 +27,16 @@ const POIs = () => {
 
   const fetchPOIs = async () => {
     try {
+      console.log('Fetching POIs...');
       const response = await poisApi.getAll();
-      setPois(response.data);
+      console.log('POIs response:', response.data);
+      
+      // Ensure we have an array
+      const poisData = Array.isArray(response.data) ? response.data : [];
+      setPois(poisData);
     } catch (error) {
+      console.error('Error fetching POIs:', error);
+      setPois([]); // Set empty array on error
       toast({
         title: "Error",
         description: "Failed to fetch POIs",
@@ -43,10 +49,16 @@ const POIs = () => {
 
   const fetchCategories = async () => {
     try {
+      console.log('Fetching categories...');
       const response = await categoriesApi.getAll();
-      setCategories(response.data);
+      console.log('Categories response:', response.data);
+      
+      // Ensure we have an array
+      const categoriesData = Array.isArray(response.data) ? response.data : [];
+      setCategories(categoriesData);
     } catch (error) {
-      console.error('Failed to fetch categories:', error);
+      console.error('Error fetching categories:', error);
+      setCategories([]); // Set empty array on error
     }
   };
 
@@ -105,6 +117,7 @@ const POIs = () => {
       resetForm();
       fetchPOIs();
     } catch (error) {
+      console.error('Error submitting POI:', error);
       toast({
         title: "Error",
         description: `Failed to ${editingPOI ? 'update' : 'create'} POI`,
@@ -124,6 +137,7 @@ const POIs = () => {
         description: "POI deleted successfully",
       });
     } catch (error) {
+      console.error('Error deleting POI:', error);
       toast({
         title: "Error",
         description: "Failed to delete POI",
@@ -318,12 +332,16 @@ const POIs = () => {
             key={poi.id}
             className="bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow overflow-hidden"
           >
-            {poi.image_urls && poi.image_urls.length > 0 && (
+            {poi.image_urls && Array.isArray(poi.image_urls) && poi.image_urls.length > 0 && (
               <div className="h-48 bg-gray-200">
                 <img
                   src={poi.image_urls[0]}
                   alt={poi.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', poi.image_urls?.[0]);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             )}
@@ -352,10 +370,10 @@ const POIs = () => {
               
               <div className="flex items-center text-sm text-gray-500">
                 <MapPin className="h-4 w-4 mr-1" />
-                {poi.location.lat.toFixed(4)}, {poi.location.lng.toFixed(4)}
+                {poi.location?.lat?.toFixed(4)}, {poi.location?.lng?.toFixed(4)}
               </div>
               
-              {poi.image_urls && poi.image_urls.length > 1 && (
+              {poi.image_urls && Array.isArray(poi.image_urls) && poi.image_urls.length > 1 && (
                 <p className="text-xs text-gray-400 mt-2">
                   +{poi.image_urls.length - 1} more image(s)
                 </p>
