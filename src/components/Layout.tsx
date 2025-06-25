@@ -3,6 +3,7 @@ import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { MapPin, Calendar, FolderOpen, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { brandingConfig } from '../config/branding';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,14 +25,27 @@ const Layout = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Vista Explorer</h1>
+        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={brandingConfig.logoUrl} 
+              alt={brandingConfig.logoAlt}
+              className="h-8 w-8 rounded-md object-cover"
+              onError={(e) => {
+                // Fallback to a simple colored div if image fails to load
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <div className="h-8 w-8 bg-accent rounded-md hidden flex-shrink-0"></div>
+            <h1 className="text-xl font-bold text-sidebar-foreground">{brandingConfig.appName}</h1>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-md text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent"
           >
             <X className="h-5 w-5" />
           </button>
@@ -45,8 +59,8 @@ const Layout = () => {
                 className={({ isActive }) =>
                   `group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive
-                      ? 'bg-blue-100 text-blue-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                   }`
                 }
               >
@@ -72,7 +86,7 @@ const Layout = () => {
                   <Menu className="h-5 w-5" />
                 </button>
                 <h2 className="ml-2 text-lg font-semibold text-gray-900 lg:ml-0">
-                  Portal Management
+                  {brandingConfig.description}
                 </h2>
               </div>
             </div>
