@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Calendar, MapPin, Upload, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, MapPin, Upload, X, FileSpreadsheet } from 'lucide-react';
 import { eventsApi } from '../services/api';
 import { Event, CreateEvent } from '../types';
 import { useToast } from '../hooks/use-toast';
+import ImportModal from './ImportModal';
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState<CreateEvent>({
     title: '',
@@ -145,6 +147,51 @@ const Events = () => {
     setFormData(prev => ({ ...prev, image: file }));
   };
 
+  const handleBulkImport = async (importData: any[]) => {
+    const results = { success: 0, failed: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < importData.length; i++) {
+      try {
+        const formData = new FormData();
+        formData.append('title', importData[i].title);
+        formData.append('description', importData[i].description);
+        formData.append('location', importData[i].location);
+        formData.append('start_date', importData[i].start_date);
+        formData.append('end_date', importData[i].end_date);
+        
+        // Handle image URL if provided
+        if (importData[i].image_url) {
+          formData.append('image_url', importData[i].image_url);
+        }
+        
+        await eventsApi.create(formData);
+        results.success++;
+      } catch (error) {
+        console.error(`Failed to import event ${i + 1}:`, error);
+        results.failed++;
+        results.errors.push(`Row ${i + 1}: ${importData[i].title} - Import failed`);
+      }
+    }
+    
+    if (results.success > 0) {
+      fetchEvents(); // Refresh the list
+    }
+    
+    // Show summary toast
+    if (results.failed === 0) {
+      toast({
+        title: "Import Successful",
+        description: `Successfully imported ${results.success} events`,
+      });
+    } else {
+      toast({
+        title: "Import Completed with Errors",
+        description: `${results.success} successful, ${results.failed} failed`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDateTime = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleString();
@@ -166,14 +213,30 @@ const Events = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Events of Interest</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Event
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Import from Excel
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Event
+          </button>
+        </div>
       </div>
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleBulkImport}
+        type="event"
+      />
 
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow-md border">

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Upload, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Upload, X, FileSpreadsheet } from 'lucide-react';
 import { poisApi, categoriesApi } from '../services/api';
 import { POI, Category, CreatePOI } from '../types';
 import { useToast } from '../hooks/use-toast';
+import ImportModal from './ImportModal';
 
 const POIs = () => {
   const [pois, setPois] = useState<POI[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingPOI, setEditingPOI] = useState<POI | null>(null);
   const [formData, setFormData] = useState<CreatePOI>({
     name: '',
@@ -175,6 +177,54 @@ const POIs = () => {
     setFormData(prev => ({ ...prev, images: files }));
   };
 
+  const handleBulkImport = async (importData: any[]) => {
+    const results = { success: 0, failed: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < importData.length; i++) {
+      try {
+        const formData = new FormData();
+        formData.append('name', importData[i].name);
+        formData.append('description', importData[i].description);
+        formData.append('category_id', importData[i].category_id.toString());
+        formData.append('location', importData[i].location);
+        
+        // Handle image URLs if provided
+        if (importData[i].image_urls && Array.isArray(importData[i].image_urls)) {
+          importData[i].image_urls.forEach((url: string, index: number) => {
+            if (url.trim()) {
+              formData.append(`image_urls[${index}]`, url.trim());
+            }
+          });
+        }
+        
+        await poisApi.create(formData);
+        results.success++;
+      } catch (error) {
+        console.error(`Failed to import POI ${i + 1}:`, error);
+        results.failed++;
+        results.errors.push(`Row ${i + 1}: ${importData[i].name} - Import failed`);
+      }
+    }
+    
+    if (results.success > 0) {
+      fetchPOIs(); // Refresh the list
+    }
+    
+    // Show summary toast
+    if (results.failed === 0) {
+      toast({
+        title: "Import Successful",
+        description: `Successfully imported ${results.success} POIs`,
+      });
+    } else {
+      toast({
+        title: "Import Completed with Errors",
+        description: `${results.success} successful, ${results.failed} failed`,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -187,14 +237,31 @@ const POIs = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Places of Interest</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add POI
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Import from Excel
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add POI
+          </button>
+        </div>
       </div>
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleBulkImport}
+        type="poi"
+        categories={categories}
+      />
 
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow-md border">
