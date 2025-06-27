@@ -21,7 +21,7 @@ export const appConfig = {
   },
   api: {
     // This will be updated during backend integration
-    baseUrl: process.env.NODE_ENV === 'production' ? '/api' : 'https://e51f-197-255-102-7.ngrok-free.app/api',
+    baseUrl: process.env.NODE_ENV === 'production' ? '/api' : 'https://rl255kdm-5000.uks1.devtunnels.ms/api',
   }
 } as const;
 
