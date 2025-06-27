@@ -1,16 +1,27 @@
 
 import axios from 'axios';
-
-// Replace with your actual ngrok subdomain
-const BASE_URL = 'https://e51f-197-255-102-7.ngrok-free.app/api';
+import { appConfig } from '../config';
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: appConfig.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
   },
+  timeout: 10000, // 10 second timeout
 });
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making API request to:', config.baseURL + config.url);
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor to handle potential data format issues
 api.interceptors.response.use(
@@ -20,6 +31,16 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error);
+    
+    // Handle different types of errors
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error - check if backend server is running');
+    } else if (error.response) {
+      console.error('Server responded with error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error('Request made but no response received');
+    }
+    
     return Promise.reject(error);
   }
 );

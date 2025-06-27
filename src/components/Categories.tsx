@@ -12,6 +12,7 @@ const Categories = () => {
   const [editingName, setEditingName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -20,12 +21,21 @@ const Categories = () => {
 
   const fetchCategories = async () => {
     try {
+      setError(null);
+      console.log('Fetching categories...');
       const response = await categoriesApi.getAll();
-      setCategories(response.data);
+      console.log('Categories response:', response.data);
+      
+      // Ensure we have an array
+      const categoriesData = Array.isArray(response.data) ? response.data : [];
+      setCategories(categoriesData);
     } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]); // Set empty array on error
+      setError('Failed to connect to the server. Please check if your backend is running.');
       toast({
-        title: "Error",
-        description: "Failed to fetch categories",
+        title: "Connection Error",
+        description: "Cannot connect to the backend server. Please check if it's running.",
         variant: "destructive",
       });
     } finally {
@@ -109,6 +119,23 @@ const Categories = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="text-red-600 text-center">
+          <h2 className="text-xl font-semibold mb-2">Connection Error</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+        <button
+          onClick={fetchCategories}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }

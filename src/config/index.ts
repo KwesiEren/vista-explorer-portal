@@ -20,8 +20,8 @@ export const appConfig = {
     version: '1.0.0',
   },
   api: {
-    // This will be updated during backend integration
-    baseUrl: process.env.NODE_ENV === 'production' ? '/api' : 'https://rl255kdm-5000.uks1.devtunnels.ms/api',
+    // Updated to use the correct ngrok URL from the original API service
+    baseUrl: process.env.NODE_ENV === 'production' ? '/api' : 'https://e51f-197-255-102-7.ngrok-free.app/api',
   }
 } as const;
 
